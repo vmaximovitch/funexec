@@ -36,6 +36,16 @@ trait Stream[+A] {
       case Empty => this
       case Cons(h, t) => cons(h(), t().take(n - 1))
     }
+  def takeUnfold(n: Int): Stream[A] =
+    Stream.unfold((n, this)) {
+      case (count, s) =>
+        if (count <= 0) None
+        else s match {
+          case Empty => None
+          case Cons(h, t) if count == 1 => Some((h(), (count - 1, empty)))
+          case Cons(h, t) if count > 1 => Some((h(), (count - 1, t())))
+        }
+    }
 
   // return all starting elements of a Stream that match the given predicate
   def takeWhile(p: A => Boolean): Stream[A] = this match {
@@ -47,9 +57,17 @@ trait Stream[+A] {
     }
   }
 
-  // returning all starting elements of a Stream that match the given predicate
   def takeWhileFold(p: A => Boolean): Stream[A] =
     foldRight(empty[A])((a, b) => if (p(a)) cons(a, b) else empty)
+
+  def takeWhileUnfold(p: A => Boolean): Stream[A] =
+    Stream.unfold(this) {
+      case Empty => None
+      case Cons(h, t) => {
+        lazy val hd = h()
+        if (p(hd)) Some((hd, t())) else None
+      }
+    }
 
   // skip the first n elements of a Stream
   def drop(n: Int): Stream[A] = {
@@ -64,14 +82,21 @@ trait Stream[+A] {
   }
 
   // checks that all elements in the Stream match a given predicate
-  def forAll(p: A => Boolean): Boolean = foldRight(false)((a, b) => p(a) && b)
+  def forAll(p: A => Boolean): Boolean = foldRight(true)((a, b) => p(a) && b)
 
-  def startsWith[B](s: Stream[B]): Boolean = sys.error("todo")
+  def startsWith[B](s: Stream[B]): Boolean =
+    zipAll(s).takeWhile(_._2.isDefined).forAll { case (a, b) => a == b }
 
   def headOption: Option[A] = foldRight(None: Option[A])((a, _) => Some(a))
 
   def map[B](f: A => B): Stream[B] =
     foldRight(empty[B])((a, b) => cons(f(a), b))
+
+  def mapUnfold[B](f: A => B): Stream[B] =
+    Stream.unfold(this) {
+      case Empty => None
+      case Cons(h, t) => Some((f(h()), t()))
+    }
 
   def flatMap[B >: A](f: A => Stream[B]): Stream[B] =
     foldRight(empty[B])((a, b) => f(a) append b)
@@ -81,6 +106,39 @@ trait Stream[+A] {
 
   def append[B >: A](s: => Stream[B]): Stream[B] =
     foldRight(s)((a, b) => cons(a, b))
+
+  def zipWith[B, C](s2: Stream[B])(f: (A, B) => C): Stream[C] =
+    Stream.unfold((this, s2)) {
+      case (Empty, _) => None
+      case (_, Empty) => None
+      case (Cons(ah, at), Cons(bh, bt)) => Some((f(ah(), bh()), (at(), bt())))
+    }
+
+  def zipWithAll[B, C](s2: Stream[B])(f: (Option[A], Option[B]) => C): Stream[C] =
+    Stream.unfold((this, s2)) {
+      case (Empty, Empty) => None
+      case (Empty, Cons(bh, bt)) => Some((f(None, Some(bh())), (empty, bt())))
+      case (Cons(ah, at), Empty) => Some((f(Some(ah()), None), (at(), empty)))
+      case (Cons(ah, at), Cons(bh, bt)) => Some((f(Some(ah()), Some(bh())), (at(), bt())))
+    }
+
+  def zipAll[B](s2: Stream[B]): Stream[(Option[A], Option[B])] =
+    zipWithAll(s2)((_, _))
+
+  def tails: Stream[Stream[A]] =
+    Stream.unfold(this) {
+      case Empty => None
+      case s @ Cons(h, t) => Some(s, t())
+    } append Stream(empty)
+  def hasSubsequence[A](s: Stream[A]): Boolean = tails exists (_ startsWith s)
+
+  def scanRight[B](z: => B)(f: (A, => B) => B): Stream[B] =
+    Stream.unfold((Some(z):Option[B], this)) {
+      case (None, Empty) => None
+      case (Some(z), Empty) => Some((z, (None, empty)))
+      case (Some(z), Cons(h, t)) => Some(z, (Some(f(h(), z)), t()))
+      case _ => None
+    }
 }
 case object Empty extends Stream[Nothing]
 case class Cons[+A](h: () => A, t: () => Stream[A]) extends Stream[A]
@@ -110,13 +168,13 @@ object Stream {
   def from(n: Int): Stream[Int] = Stream.cons(n, from(n + 1))
 
   // Fibonacci numbers
-  def fib(): Stream[Int] = {
-    def fibGo(prev: Int, n: Int): Stream[Int] = cons(n, fibGo(n, n + prev))
+  def fibs(): Stream[Int] = {
+    def fibGo(prev: Int, next: Int): Stream[Int] = cons(prev, fibGo(next, prev + next))
     fibGo(0, 1)
   }
 
   // Fibonacci numbers
-  def fibUnfold(): Stream[Int] =
+  def fibsUnfold(): Stream[Int] =
     unfold((0, 1)) { case (a, s) => Some((a, (s, s + a))) }
   // incremental steam of integers
   def fromUnfold(n: Int): Stream[Int] =
