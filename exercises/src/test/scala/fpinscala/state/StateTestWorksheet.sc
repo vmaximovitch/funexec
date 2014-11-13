@@ -25,5 +25,10 @@ object StateTestWorksheet {
   val (rl, rng7) = sequence(lr)(rng6)             //> rl  : List[Double] = List(0.5758551261387765, 0.04741232097148895, 0.6982558
                                                   //| 290474117, 0.5406941426917911)
                                                   //| rng7  : fpinscala.state.RNG = Simple(200430572549132)
-
+	val st = State((s: Int) => (s+1, s))      //> st  : fpinscala.state.State[Int,Int] = State(<function1>)
+	st.map(_ * 3).run(1)                      //> res0: (Int, Int) = (6,1)
+	State.get.run(2)                          //> res1: (Int, Int) = (2,2)
+	
+	State.simulateMachine(List(Coin, Coin, Turn, Turn)).run(Machine(false, 3, 2))
+                                                  //> res2: ((Int, Int), fpinscala.state.Machine) = ((3,2),Machine(false,2,3))
 }
