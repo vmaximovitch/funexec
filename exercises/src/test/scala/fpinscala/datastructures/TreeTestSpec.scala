@@ -9,7 +9,7 @@ import org.scalatest._
  * @author vladimirmaksimovich
  *
  */
-class TestTestSpec extends FlatSpec with Matchers {
+class TreeTestSpec extends FlatSpec with Matchers {
   
   def fixture =
     new {

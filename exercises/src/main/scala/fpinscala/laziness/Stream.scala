@@ -113,6 +113,10 @@ trait Stream[+A] {
       case (_, Empty) => None
       case (Cons(ah, at), Cons(bh, bt)) => Some((f(ah(), bh()), (at(), bt())))
     }
+  
+  // special case of `zip`
+  def zip[B](s2: Stream[B]): Stream[(A,B)] = 
+    zipWith(s2)((_,_))
 
   def zipWithAll[B, C](s2: Stream[B])(f: (Option[A], Option[B]) => C): Stream[C] =
     Stream.unfold((this, s2)) {
