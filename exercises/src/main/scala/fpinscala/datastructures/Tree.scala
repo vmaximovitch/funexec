@@ -1,7 +1,7 @@
 package fpinscala.datastructures
 
 sealed trait Tree[+A]
-case object Empty extends Tree[Nothing]
+// case object Empty extends Tree[Nothing]
 case class Leaf[A](value: A) extends Tree[A]
 case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
 
@@ -10,7 +10,7 @@ object Tree {
    *  Number of nodes in a tree
    */
   def size[A](t: Tree[A]): Int = t match {
-    case Empty => 0
+    // case Empty => 0
     case Leaf(_) => 1
     case Branch(l, r) => 1 + size(l) + size(r)
   }
@@ -18,7 +18,7 @@ object Tree {
   /** Maximum elements in a tree of nodes in a tree
    */
   def maximum(ti: Tree[Int]): Int = {
-    assert(ti != Empty, "tree must not be empty")
+    // assert(ti != Empty, "tree must not be empty")
     ti match {
       case Leaf(v) => v
       case Branch(l, r) => maximum(l) max maximum(r)
@@ -38,7 +38,7 @@ object Tree {
    *  Map for Tree
    */
   def map[A, B](t: Tree[A])(f: A => B): Tree[B] = t match {
-    case Empty => Empty
+    // case Empty => Empty
     case Leaf(v) => Leaf(f(v))
     case Branch(l, r) => Branch(map(l)(f), map(r)(f))
   }
@@ -47,7 +47,7 @@ object Tree {
    * FlatMap for Tree
    */
   def flatMap[A, B](t: Tree[A])(f: A => Tree[B]): Tree[B] = t match {
-    case Empty => Empty
+    // case Empty => Empty
     case Leaf(v) => f(v)
     case Branch(l, r) => Branch(flatMap(l)(f), flatMap(r)(f))
   }
@@ -61,7 +61,7 @@ object Tree {
   /** Fold tree
    */
   def fold[A, B](t: Tree[A])(f: A => B)(g: (B, B) => B): B = {
-    assert(t != Empty, "tree must not be empty")
+    // assert(t != Empty, "tree must not be empty")
     t match {
       case Leaf(v) => f(v)
       case Branch(l, r) => g(fold(l)(f)(g), fold(r)(f)(g))
@@ -72,7 +72,7 @@ object Tree {
    * Add value
    */
   def add[A](t: Tree[A])(value: A): Tree[A] = t match {
-    case Empty => Leaf(value)
+    // case Empty => Leaf(value)
     case l: Leaf[A] => Branch(l, Leaf(value))
     case b: Branch[A] => Branch(b, Leaf(value))
   }
@@ -95,7 +95,9 @@ object Tree {
   /**
    * Converts List to Tree
    */
-  def toTree[A](l: List[A]): Tree[A] =
-    List.foldLeft(l, Empty:Tree[A])(add(_)(_))
+  def toTree[A](l: List[A]): Tree[A] = {
+    assert(List.length(l) > 0, "tree must have at least one element")
+    List.foldLeft(List.tail(l), Leaf(List.head(l)): Tree[A])(add(_)(_))
+  }
 
 }
