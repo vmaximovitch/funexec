@@ -170,7 +170,7 @@ object Nonblocking {
         def apply(cb: B => Unit): Unit =
           p(es) { a => eval(es) {
             f(a)(es)(cb)
-          }
+            }
           }
       }
 
@@ -185,7 +185,7 @@ object Nonblocking {
         def apply(cb: A => Unit): Unit =
           p(es) { pa => eval(es) {
             pa(es)(cb)
-          }
+            }
           }
       }
 

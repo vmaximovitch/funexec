@@ -86,14 +86,16 @@ object Par {
   implicit def toParOps[A](p: Par[A]): ParOps[A] = new ParOps(p)
 
   class ParOps[A](p: Par[A]) {
-
+    def map[B](f: A => B): Par[B] = Par.map(p)(f)
+    def map2[B, C](b: Par[B])(f: (A, B) => C): Par[C] = Par.map2(p, b)(f)
+    def zip[B](b: Par[B]): Par[(A, B)] = p.map2(b)((_, _))
   }
 }
 
 object Examples {
   import Par._
   val executor: ExecutorService = Executors.newFixedThreadPool(10)
-  
+
   def sum(ints: IndexedSeq[Int]): Int = // `IndexedSeq` is a superclass of random-access sequences like `Vector` in the standard library. Unlike lists, these sequences provide an efficient `splitAt` method for dividing them into two parts at a particular index.
     if (ints.size <= 1)
       ints.headOption getOrElse 0 // `headOption` is a method defined on all collections in Scala. We saw this function in chapter 3.
@@ -107,7 +109,7 @@ object Examples {
     val pints = sequenceBalanced(ints.map(unit(_)))
     run(executor)(pints).get.sum
   }
-  
+
   def wordCount(strs: List[String]): Int = {
     val pstrs = sequence(strs map (_.split("\\W+").length) map (unit(_)))
     run(executor)(pstrs).get.sum

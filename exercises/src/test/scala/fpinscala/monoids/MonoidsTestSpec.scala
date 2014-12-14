@@ -1,13 +1,12 @@
 /**
   */
-package fpinscala.parsing
+package fpinscala.monoids
 
 import fpinscala.state.RNG
 import org.scalatest.Matchers
 import org.scalatest.FlatSpec
 import fpinscala.testing.Gen
 import fpinscala.testing.Prop._
-import fpinscala.monoids.Monoid
 
 /** @author vladimirmaksimovich
   *
