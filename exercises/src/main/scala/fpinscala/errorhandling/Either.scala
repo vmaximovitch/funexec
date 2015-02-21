@@ -2,6 +2,7 @@ package fpinscala.errorhandling
 
 import scala.{ Option => _, Either => _, Left => _, Right => _, _ } // hide std library `Option` and `Either`, since we are writing our own in this chapter
 
+// custom Either
 sealed trait Either[+E, +A] {
   def map[B](f: A => B): Either[E, B] = this match {
     case e: Left[_] => e
@@ -59,8 +60,7 @@ object Either {
       case _ => a.map2(b)(f)
     }
 
-  def sequenceL[E, A](es: List[Either[List[E], A]]): Either[List[E], List[A]] =
-    traverseL(es)(x => x)
+  def sequenceL[E, A](es: List[Either[List[E], A]]): Either[List[E], List[A]] = traverseL(es)(x => x)
 
   def traverseL[E, A, B](as: List[A])(
     f: A => Either[List[E], B]): Either[List[E], List[B]] = as match {
